@@ -1,5 +1,14 @@
 {
 	"version": "0.2.0",
+	"lastPrograms": [
+		{
+			"label": "SIGAMDI"
+		},
+		{
+			"label": "TLPP.ENVIRONMENT.GETINCLUDESTLPP"
+		}
+	],
+	"lastProgramExecuted": "SIGAMDI",
 	"configurations": [
 		{
 			"type": "totvs_language_web_debug",
@@ -10,14 +19,5 @@
 			"enableTableSync": true,
 			"enableMultiThread": true
 		}
-	],
-	"lastPrograms": [
-		{
-			"label": "SIGAMDI"
-		},
-		{
-			"label": "TLPP.ENVIRONMENT.GETINCLUDESTLPP"
-		}
-	],
-	"lastProgramExecuted": "TLPP.ENVIRONMENT.GETINCLUDESTLPP"
+	]
 }
