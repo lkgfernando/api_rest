@@ -1,0 +1,24 @@
+#Include "totvs.ch"
+#Include "tlpp-core.th"
+
+
+/*/{Protheus.doc} U_INTRODUCAO_AULA_01
+(long_description)
+@type user function fwAlertInfo(")
+@author user
+@since 28/06/2026
+@version version
+@param param_name, param_type, param_descr
+@return return_var, return_type, return_description
+@example
+(examples)
+@see (links_or_references)
+/*/
+Function U_INTRODUCAO_AULA_01()
+
+Return fwAlertInfo("U_INTRODUCAO_AULA_01")
+
+
+Function U_INTRODUCAO_AULA_01_SEQ_01()
+
+Return fwAlertInfo("U_INTRODUCAO_AULA_01_SEQ_01")

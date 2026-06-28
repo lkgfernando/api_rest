@@ -6,9 +6,16 @@
 		},
 		{
 			"label": "TLPP.ENVIRONMENT.GETINCLUDESTLPP"
+		},
+		{
+			"label": "U_INTRODUCAO_AULA_01"
+		},
+		{
+			"args": [],
+			"label": "U_AULA01"
 		}
 	],
-	"lastProgramExecuted": "SIGAMDI",
+	"lastProgramExecuted": "U_AULA01",
 	"configurations": [
 		{
 			"type": "totvs_language_web_debug",
@@ -19,5 +26,6 @@
 			"enableTableSync": true,
 			"enableMultiThread": true
 		}
-	]
+	],
+	"lastProgramArguments": []
 }
