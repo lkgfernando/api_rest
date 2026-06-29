@@ -13,9 +13,12 @@
 		{
 			"args": [],
 			"label": "U_AULA01"
+		},
+		{
+			"label": "U_AULA_04"
 		}
 	],
-	"lastProgramExecuted": "U_AULA01",
+	"lastProgramExecuted": "SIGAMDI",
 	"configurations": [
 		{
 			"type": "totvs_language_web_debug",

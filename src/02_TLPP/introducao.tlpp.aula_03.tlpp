@@ -1,0 +1,15 @@
+#Include "Totvs.ch"
+#Include "tlpp-core.th"
+
+NAMESPACE introducao.tlpp
+
+
+
+/*/{Protheus.doc} U_AULA_03
+(long_description)
+@type user function
+@see https://tdn.totvs.com/display/tec/Tipos+Nativos
+/*/
+Function U_AULA_03()
+
+Return 

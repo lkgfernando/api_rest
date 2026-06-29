@@ -1,0 +1,38 @@
+#Include 'Totvs.ch'
+#Include 'tlpp-core.th'
+
+
+Function U_AULA_04 AS Logical
+    Local err    as object 
+    Local error_description as character
+    Local error_stack as character
+    Local lOcorreu_erro as logical
+
+    BEGIN TRANSACTION
+
+    try
+
+        &('2 + 2')
+
+        lOcorreu_erro := .T.
+
+        If lOcorreu_erro
+            err := errorClass():new()
+            err:description := "Ocorreu um erro"
+            throw err
+        Endif
+
+    catch err
+
+        error_description   := err:description
+        error_stack         := err:errorstack
+        disarmetransaction()
+    finally
+        fwAlertInfo("Finally")
+    endtry
+
+    END TRANSACTION
+
+    fwAlertInfo("Saiu do try/catch/finally")
+
+Return .T.
