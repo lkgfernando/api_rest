@@ -1,0 +1,29 @@
+#Include "totvs.ch"
+#Include "tlpp-core.th"
+
+NAMESPACE introducao.tlpp
+
+/*/{Protheus.doc} U_AULA_06
+(Exemplo de metodos estaticos)
+@type user function
+
+introducao.tlpp.U_AULA_06()
+
+/*/
+Function U_AULA_06() as logical
+    Local lRpc  as logical
+    Local lRet  as logical
+    Local cJsonReceitaWS as character
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRpc := .T.
+    EndIf
+
+    cJsonReceitaWS := introducao.tlpp.pessoa():getJsonReceitaWs('49.595.577/0001-82')
+    
+    If lRpc
+        rpcClearEnv()
+    EndIf
+
+Return lRet

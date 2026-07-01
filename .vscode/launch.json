@@ -16,9 +16,16 @@
 		},
 		{
 			"label": "U_AULA_04"
+		},
+		{
+			"args": [],
+			"label": "introducao.tlpp.U_AULA_05"
+		},
+		{
+			"label": "introducao.tlpp.U_AULA_06"
 		}
 	],
-	"lastProgramExecuted": "SIGAMDI",
+	"lastProgramExecuted": "introducao.tlpp.U_AULA_06",
 	"configurations": [
 		{
 			"type": "totvs_language_web_debug",

@@ -1,0 +1,205 @@
+#Include "Totvs.ch"
+#Include "tlpp-core.th"
+#Include "curso-api.th"
+
+NAMESPACE introducao.tlpp
+
+// introducao.tlpp.U_AULA_05()
+
+Function U_AULA_05
+
+    Local oPessoa   := introducao.tlpp.pessoa():new()
+    Local cCNPJ     :=  ""
+    Local lRpc      := .F.
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRpc := .T.
+    EndIf
+
+    cCNPJ := '61.186.888/0003-55'
+    oPessoa:setCGC(cCNPJ)
+    //oPessoa:getDadosReceitaWS()
+    oPessoa:gravaCliente()
+
+    cCNPJ := '33.649.575/0001-99'
+    oPessoa:setCGC(cCNPJ)
+    //oPessoa:getDadosReceitaWS()
+    oPessoa:gravaCliente()
+
+    cCNPJ := '52.736.949/0048-11'
+    oPessoa:setCGC(cCNPJ)
+    oPessoa:gravaCliente()
+
+    If lRpc
+        rpcClearEnv()
+    EndIf
+
+Return
+
+
+class pessoa implements interface_pessoa
+
+    Private data codigo as character
+    Private data loja as character
+    Private data cnpj as character
+    Private data nome as character
+    Private data nome_reduz as character
+    Private data pessoa as character
+    Private data endereco as character
+    Private data cep as character
+    Private data bairro as character
+    Private data cidade as character
+    Private data cod_ibge as character
+    Private data estado as character
+    Private data email as character
+    Private data ddd as character
+    Private data telefone as character
+    Private data txt_log as character
+
+    Public  method new() constructor
+    Public  method setCGC() as logical
+    Private method getDadosReceitaWS() as logical
+    Public  method gravaCliente() as logical
+    Public  method grava_fornecedor() as logical
+    Static  method getJsonReceitaWs() as character 
+
+endclass
+
+method new() class pessoa
+
+return self
+
+method getJsonReceitaWs(cgc) class pessoa as character
+
+    Local cCNPJ := strtran(strtran(strtran(cgc, '.', ''), '-', ''), '/', '')
+    Local cURL          := "https://www.receitaws.com.br/v1/cnpj/" + cCNPJ
+    Local cJson         := httpget(cURL)       
+
+Return cJson
+
+method setCGC(cgc) class pessoa as logical
+
+    self:cnpj := cgc
+    self:cnpj := strtran(strtran(strtran(self:cnpj, '.', ''), '-', ''), '/', '')
+
+    SA1->(dbSetOrder(3), dbSeek(xFilial(alias())+self:cnpj))
+
+    self:codigo     := SA1->A1_COD
+    self:loja       := SA1->A1_LOJA
+    self:nome       := SA1->A1_NOME
+    self:nome_reduz := SA1->A1_NREDUZ
+    self:endereco   := SA1->A1_END
+    self:cep        := SA1->A1_CEP
+    self:bairro     := SA1->A1_BAIRRO
+    self:cidade     := SA1->A1_MUN
+    self:cod_ibge   := SA1->A1_COD_MUN
+    self:estado     := SA1->A1_EST
+    self:email      := SA1->A1_EMAIL
+    self:ddd        := SA1->A1_DDD
+    self:telefone   := SA1->A1_TEL
+    self:pessoa     := SA1->A1_PESSOA
+
+    If empty(self:pessoa)
+        self:pessoa := 'J'
+    EndIf
+
+    ::getDadosReceitaWS()
+
+Return .T.
+
+
+method getDadosReceitaWS() class pessoa as logical
+
+    Local cCNPJ         := strtran(strtran(strtran(self:cnpj, '.', ''), '-', ''), '/', '')
+    Local cURL          := "https://www.receitaws.com.br/v1/cnpj/" + cCNPJ
+    Local cRetorno      := httpget(cURL)
+    Local jRetorno      := jsonObject():new()
+
+    cRetono             := decodeUTF8(cRetorno,'cp1252')
+    cRetorno             := fwNoAccent(cRetorno)
+
+    jRetorno:fromJson(cRetorno)
+
+    If valtype(jRetorno['nome']) == 'U'
+        return .F.
+    EndIf
+
+    self:nome       := jRetorno['nome'      ]
+    self:nome_reduz := IF(jRetorno['fantasia'  ] == "",LEFT(jRetorno['nome'], 15), jRetorno['fantasia'  ]) 
+    self:endereco   := jRetorno['logradouro']
+    self:cep        := jRetorno['cep'       ]
+    self:bairro     := jRetorno['bairro'    ]
+    self:cidade     := jRetorno['municipio' ]
+    self:estado     := jRetorno['uf'        ]
+    self:telefone   := jRetorno['telefone'  ]
+    self:email      := jRetorno['email'     ]
+
+    self:cep        := strtran(strtran(self:cep, '.', ''), '-', '')
+
+    CC2->(dbSetOrder(4), dbSeek(xFilial(alias())+self:estado+self:cidade))
+
+    If CC2->(found())
+        self:cod_ibge := CC2->CC2_CODMUN
+    EndIF
+
+
+Return .T.
+
+
+method gravaCliente() class pessoa as logical
+
+    Local nOpc          := if(empty(self:codigo), 3, 4)
+    Local aDados        := Array(0)
+    Local aCamposSA1    := Array(0)
+    Local x
+
+    aCamposSA1          := fwSx3Util():getAllFields('SA1', .F.)
+
+    Private lMsErroAuto := .F.
+
+
+    If nOpc == 3
+        aAdd(aDados, {"A1_LOJA"     , "01"              ,Nil})
+    EndIf
+    aAdd(aDados, {"A1_NOME"     , self:nome         ,Nil})
+    aAdd(aDados, {"A1_NREDUZ"   , self:nome_reduz   ,Nil})
+    aAdd(aDados, {"A1_END"      , self:endereco     ,Nil})
+    aAdd(aDados, {"A1_TIPO"     , "F"               ,Nil})
+    aAdd(aDados, {"A1_CEP"      , self:cep          ,Nil})
+    aAdd(aDados, {"A1_BAIRRO"   , self:bairro       ,Nil})
+    aAdd(aDados, {"A1_EST"      , self:estado       ,Nil})
+    aAdd(aDados, {"A1_COD_MUN"  , self:cod_ibge     ,Nil})
+    aAdd(aDados, {"A1_MUN"      , self:cidade       ,Nil})
+    aAdd(aDados, {"A1_TEL"      , self:telefone     ,Nil})
+    aAdd(aDados, {"A1_EMAIL"    , self:email        ,Nil})
+    aAdd(aDados, {"A1_PESSOA"   , self:pessoa       ,Nil})
+
+    If nOpc == 4
+        For x := 1 To Len(aCamposSA1)
+            If aScan(aDados, {|campo| campo[1] == aCamposSA1[x]}) == 0
+                aAdd(aDados, {aCamposSA1[x], SA1->&(aCamposSA1[x]), Nil})
+            EndIf
+        Next
+    EndIf
+
+    msExecAuto({|x,y| mata030(x,y)}, aDados, nOpc)
+
+    If lMsErroAuto
+        mostraerro('\system\','erro_mata030.txt')
+        self:txt_log := memoread('\system\erro_mata030.txt')
+        return .F.
+    EndIf
+
+    self:codigo     := SA1->A1_COD
+    self:loja       := SA1->A1_LOJA
+    self:cod_ibge   := SA1->A1_COD_MUN
+    self:txt_log    := 'CADASTRO ATUALIZADO!!!'
+
+
+Return .T.
+
+
+method grava_fornecedor() class pessoa as logical
+
+return .T.
