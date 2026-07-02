@@ -1,6 +1,8 @@
 #Include 'Totvs.ch'
 #Include 'tlpp-core.th'
 
+NAMESPACE introducao.tlpp
+
 
 Function U_AULA_04 AS Logical
     Local err    as object 

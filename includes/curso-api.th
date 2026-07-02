@@ -1,3 +1,7 @@
 interface interface_pessoa
 	method grava_fornecedor()
 endinterface
+
+@annotation aula
+    objetivo as character
+@end

@@ -1,0 +1,54 @@
+#Include "totvs.ch"
+#Include "tlpp-core.th"
+
+NAMESPACE introducao.tlpp
+
+/*/{Protheus.doc} U_AULA_07
+(Exemplo de metodos estaticos)
+@type user function
+
+introducao.tlpp.U_AULA_07()
+
+/*/
+Function U_AULA_07() as logical
+    Local lRpc  as logical
+    Local lRet  as logical
+    Local lOpen as logical
+    Local lClose as logical
+    Local cJsonReceitaWS as character
+    Local jJsonReceitaWS as json
+    Local aAtividades as array
+    Local jAtividade  as json
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRpc := .T.
+    EndIf
+
+    cJsonReceitaWS := introducao.tlpp.pessoa():getJsonReceitaWs('49.595.577/0001-82')
+    jJsonReceitaWS := jsonObject():new()
+
+    jJsonReceitaWS:fromJson(cJsonReceitaWS)
+
+    lOpen           := .not. empty(jJsonReceitaWS['abertura'])
+    lClose          := .not. empty(jJsonReceitaWS['fechamento'])
+
+    jJsonReceitaWS['fechamento']   := if(lClose, jJsonReceitaWS['fechamento'], '01/01/2026')
+    aAtividades                    := jJsonReceitaWS['atividades_secundarias']
+    jAtividade                     := jsonObject():new()
+    jAtividade['code']             := '99.99-9-99'
+    jAtividade['text']             := 'Atividade de Teste'    
+
+    cCode4                         := jJsonReceitaWS['atividades_secundarias', 4, 'code']
+
+    aAdd(aAtividades, jAtividade)
+
+    cJsonRet                       := jJsonReceitaWS:toJson()
+    
+    If lRpc
+        rpcClearEnv()
+    EndIf
+
+    lRet := .T.
+
+Return lRet

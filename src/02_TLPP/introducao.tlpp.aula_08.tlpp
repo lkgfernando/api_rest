@@ -1,0 +1,33 @@
+#Include "Totvs.ch"
+#Include "tlpp-core.th"
+
+
+NAMESPACE introducao.tlpp
+
+
+/*/{Protheus.doc} introducao.tlpp.U_AULA_08
+Annotation
+
+*/
+
+@annotation aula
+   objetivo as character
+@end
+
+@aula(objetivo = "Exemplificar o funcinamento de annotations")
+Function U_AULA_08()
+    Local lRPC as logical
+
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRPC := .T.
+    EndIf
+
+    xret    := reflection.getFunctionsByAnnotation('aula')
+
+    If lRPC
+        rpcClearEnv()
+    EndIf
+
+Return .T.
