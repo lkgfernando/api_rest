@@ -1,0 +1,125 @@
+#Include 'Totvs.ch'
+#Include 'tlpp-core.th'
+
+
+NAMESPACE treinamento.api
+
+
+class CLIENTES
+
+    public method new() constructor
+
+    @get(endpoint= '/treinamento/clientes', description= 'Metodo emxplo para listagem de clientes')
+    public method listar() as logical
+
+    @get(endpoint= '/treinamento/clientes/:codigo/:loja')
+    public method detalhes_cliente() as logical
+
+end class
+
+
+method new() class CLIENTES ;return self
+
+method listar() class CLIENTES
+
+    Local lRpc  as logical
+    Local cErrorStack as character
+    Local cErrorDescr as character
+    Local err       as object
+    Local jResp as json
+    Local jCliente as json
+ 
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRpc    := .T.
+    EndIf
+
+    try
+
+        jResp   := jsonObject():new()
+        jResp['SA1'] := array(0)
+
+        dbSelectArea('SA1')
+        dbSetOrder(1)
+        dbGoTop()
+
+        While ! eof()
+
+            jCliente := jsonObject():new()
+            jCliente['codigo']      := allTrim(A1_COD)
+            jCliente['loja']        := A1_LOJA
+            jCliente['nome']        := allTrim(A1_NOME)
+            jCliente['fantasia']    := allTrim(A1_NREDUZ)
+            jCliente['endereco']    := allTrim(A1_END)
+
+
+            aAdd(jResp['SA1'], jCliente)
+
+            dbSkip()
+
+        EndDo
+
+        oRest:setResponse(jResp:toJson())
+
+
+        dbCloseArea()
+
+    catch err
+        cErrorStack := err:errorstack
+        cErrorDescr := err:errordescription
+
+    endtry
+
+
+    If lRpc
+        rpcClearEnv()
+    EndIf
+
+return .T.
+
+
+// Api de detalhamento de clientes
+
+
+method detalhes_cliente() class CLIENTES
+
+    Local jPathParm as json
+    Local cCodigo   as character
+    Local cLoja     as character
+    Local jResp     as json
+    Local aCampos   as array
+    Local x  
+    Local lRpc      as logical
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRpc    := .T.
+    EndIf
+    
+    jPathParm       := oRest:getPathParamsRequest()
+    jResp           := jsonObject():new()
+
+    cCodigo         := jPathParm['codigo']
+    cLoja           := jPathParm['loja']
+
+    dbSelectArea('SA1')
+    dbSetOrder(1)
+
+    dbSeek(FWxFilial(alias())+cCodigo+cLoja)
+
+    aCampos         := fwSx3Util():getAllFields(alias(), .F.)
+
+    For x := 1 To Len(aCampos)
+
+        jResp[aCampos[x]] := &(aCampos[x])
+
+    Next
+
+    oRest:setResponse(jResp:toJson())
+
+    If lRpc
+        rpcClearEnv()
+    EndIf
+
+return .T.

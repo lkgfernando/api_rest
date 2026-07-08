@@ -1,0 +1,78 @@
+#Include 'Totvs.ch'
+#Include 'tlpp-core.th'
+
+
+NAMESPACE treinamento.api
+
+
+/*/{Protheus.doc} U_AULA_01
+(long_description)
+@type user function
+@author Fernando
+@since 05/07/2026
+/*/
+@get(endpoint= '/teste', description= 'Teste de endpoint')
+User Function U_AULA_01() as logical
+    Local lRpc  as logical
+    Local lRet  as logical
+
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRpc    := .T.
+    EndIf
+
+    oRest:setResponse('{"Hello": "Olá primeiro teste!!"}')
+
+    lRet := .T.
+
+    If lRpc
+        rpcClearEnv()
+    EndIf
+
+Return lRet
+
+
+/*
+Como indicar o annotation em uma classe
+
+*/
+
+class AULA_01
+
+    public method new() constructor
+
+    @get(endpoint= '/teste2', description= 'Exemplo  teste de um metodo de uma classe para uma api rest')
+    public method teste() as logical
+
+end class
+
+method new() class AULA_01
+    
+
+Return self
+
+method teste() class AULA_01
+    Local lRpc  as logical
+    Local lRet  as logical
+    Local jResp as json
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRpc    := .T.
+    EndIf
+
+    jResp := jsonObject():new()
+    jResp['hello'] := 'Olá primeiro teste de uma classe!!'
+
+    oRest:setResponse(jResp:toJson())
+
+    lRet := .T.
+
+    If lRpc
+        rpcClearEnv()
+    EndIf
+
+Return lRet
+
+
