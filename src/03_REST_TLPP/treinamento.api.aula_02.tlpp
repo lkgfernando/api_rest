@@ -91,32 +91,55 @@ method detalhes_cliente() class CLIENTES
     Local aCampos   as array
     Local x  
     Local lRpc      as logical
+    Local err       as object
 
     If type('cEmpAnt') <> 'C'
         rpcSetEnv('99','01')
         lRpc    := .T.
     EndIf
+
+    try
     
-    jPathParm       := oRest:getPathParamsRequest()
-    jResp           := jsonObject():new()
+        jPathParm       := oRest:getPathParamsRequest()
+        jResp           := jsonObject():new()
 
-    cCodigo         := jPathParm['codigo']
-    cLoja           := jPathParm['loja']
+        cCodigo         := jPathParm['codigo']
+        cLoja           := jPathParm['loja']
 
-    dbSelectArea('SA1')
-    dbSetOrder(1)
+        dbSelectArea('SA1')
+        dbSetOrder(1)
 
-    dbSeek(FWxFilial(alias())+cCodigo+cLoja)
+        dbSeek(FWxFilial(alias())+cCodigo+cLoja)
 
-    aCampos         := fwSx3Util():getAllFields(alias(), .F.)
 
-    For x := 1 To Len(aCampos)
+        If ! Found()
+            jResp['erro']   := 'Cliente não encontrado'
+            //oRest:setFault(jResp:toJson()) // Tras mensagem de erro com o codigo 500
+            oRest:setStatusCode(400)
+            oRest:setResponse(jResp:toJson())
+            return .T.
+        EndIf
 
-        jResp[aCampos[x]] := &(aCampos[x])
 
-    Next
+        aCampos         := fwSx3Util():getAllFields(alias(), .F.)
 
-    oRest:setResponse(jResp:toJson())
+        // simulando um erro colocando a variavel Y no lugar do X
+        For x := 1 To Len(aCampos)
+
+            jResp[aCampos[x]] := &(aCampos[x])
+
+        Next
+    catch err
+
+        jResp['erro']       := err:description + CRLF + CRLF + err:errorstack
+        oRest:setFault(jResp:toJson())
+
+        return .T.
+
+    endtry
+    
+
+        oRest:setResponse(jResp:toJson())
 
     If lRpc
         rpcClearEnv()
