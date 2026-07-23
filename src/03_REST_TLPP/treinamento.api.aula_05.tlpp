@@ -1,0 +1,119 @@
+#Include "totvs.ch"
+#Include "tlpp-core.th"
+
+
+
+Class  aula_05 from fwAdapterBaseV2
+    
+    public method new() constructor
+
+    @get('/trenamento/list/fornecedores')
+    public method lista_fornecedores() as logical
+
+EndClass
+
+method new() class aula_05; return self
+
+method lista_fornecedores() class aula_05
+    Local lRpc
+    Local nError        as numeric
+    Local cError        as character
+
+    Local jQueryStr     as json
+    Local jResp         as json
+
+    Local cSql          as character
+    Local cWhere        as character
+    Local cEstado       as character
+    Local cCidade       as character
+    Local nSize         as numeric
+    Local nPage         as numeric
+    Local cOrder        as character
+    Local cSearch       as character
+ 
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRpc        := .T.
+    EndIf
+
+    try
+
+        jQueryStr       := oRest:getQueryRequest()
+
+        cEstado         := jQueryStr['estado'   ]
+        cCidade         := jQueryStr['cidade'   ]
+        nSize           := jQueryStr['pageSize' ]
+        nPage           := jQueryStr['page'     ]
+        cOrder          := jQueryStr['order'    ]
+        cSearch         := jQueryStr['search'   ]
+
+        nSize           := if(empty(nSize),10,nSize)
+        nPage           := if(empty(nPage),1 ,nPage)
+
+        cSql        := "SELECT #QueryFields# FROM " + retSqlName('SA2') + " SA2"
+        cSql        += CRLF + "WHERE #QueryWhere# "
+
+        cWhere      := "D_E_L_E_T_ = ' ' "
+
+        If .not. empty(cEstado)
+            cWhere  += CRLF + "AND A2_EST = '" + cEstado + "' "
+        EndIf
+
+        If .not. empty(cCidade)
+            cWhere += CRLF + "AND A2_MUN LIKE '%" + cCidade + "%'"
+        EndIf
+
+        If .not. empty(cSearch)
+            cWhere += CRLF + "AND A2_NOME LIKE '%" + cSearch + "%'"
+        EndIf
+
+        _Super:new('GET', .T.)
+
+        ::addMapFields('cod'         ,'A2_COD'   ,.T.,.T.,{'A2_COD','C',06,00}, 'SA2.A2_COD') // CASO O CAMPO NÃO EXISTA NA SX3 COLOCAR SEUS PARAMETROS 
+        ::addMapFields('loja'        ,'A2_LOJA'  ,.T.)
+        ::addMapFields('nome'        ,'A2_NOME'  ,.T.)
+        ::addMapFields('fantasia'    ,'A2_NREDUZ',.T.)
+        ::addMapFields('endereco'    ,'A2_END'   ,.T.)
+
+        ::setQuery(cSql)
+        ::setWhere(cWhere)
+        ::setPageSize(nSize)
+        ::setPage(nPage)
+        ::setOrder(cOrder)
+
+        If ::execute()
+
+            ::fillGetResponse()
+            oRest:setResponse(::getJsonResponse())
+
+        Else
+            
+            nError          := ::getCode()
+            cError          := ::getMessage()
+
+            jResp           := jsonObject():new()
+            jResp['error']  := cError
+
+            oRest:setFault(jResp:toJson())
+
+        EndIf
+
+    catch err
+
+        cError          := err:errorstack
+
+        jResp           := jsonObject():new()
+        jResp['error']  := cError
+
+        oRest:SetFault(jResp:toJson())
+
+
+    endtry
+
+
+    If lRpc
+        rpcClearEnv()
+    EndIf
+
+return .T.
