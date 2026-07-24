@@ -10,9 +10,120 @@ Class  aula_05 from fwAdapterBaseV2
     @get('/trenamento/list/fornecedores')
     public method lista_fornecedores() as logical
 
+    @post('/treinamento/fornecedores/new')
+    public method incluir_fornecedores() as logical
+
 EndClass
 
 method new() class aula_05; return self
+
+method incluir_fornecedores() class aula_05
+
+    Local lRpc      as logical
+    Local jBodyReq  as json
+    Local aDados    as array
+    Local nOpc      as numeric
+    Local cNome     as character
+    Local cNomeRed  as character
+    Local cTipo     as character
+    Local cCgc      as character
+    Local cEnd      as character
+    Local cBairro   as character
+    Local cCidade   as character
+    Local cEstado   as character
+    Local cEmail    as character
+    Local cTel      as character
+    Local cCodMun   as character
+    Local cError    as character
+    Local jResp     as json
+
+    Private err            as object
+    Private lMsErroAuto    as Logical
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRpc        := .T.
+    EndIf
+
+    try
+
+        jBodyReq     := jsonObject():new()
+        jBodyReq:fromJson(oRest:getBodyRequest())
+
+        cNome      := jBodyReq['nome'          ]
+        cNomeRed   := jBodyReq['nome_fantasia' ]
+        cTipo      := jBodyReq['tipo'          ]
+        cCgc       := jBodyReq['cgc'           ]
+        cEnd       := jBodyReq['endereco'      ]
+        cBairro    := jBodyReq['bairro'        ]
+        cCidade    := jBodyReq['cidade'        ]
+        cEstado    := jBodyReq['estado'        ]
+        cEmail     := jBodyReq['email'         ]
+        cTel       := jBodyReq['telefone'      ]
+
+
+        cCgc       := strTran(strTran(strTran(cCgc,'.',''),'-',''),'/','')
+        cTel       := strTran(strTran(strTran(strTran(cTel,' ',''),'-',''),'(',''),')','')
+
+        CC2->(dbSetOrder(4), dbSeek(xFilial(alias())+cEstado+cCidade))
+        cCodMun     := CC2->CC2_CODMUN
+
+        aDados  := {{"A2_LOJA"  ,"01"       ,NIL},;
+                    {"A2_NOME"  ,cNome      ,Nil},;
+                    {"A2_NREDUZ",cNomeRed   ,Nil},;
+                    {"A2_CGC"   ,cCgc       ,Nil},;
+                    {"A2_TIPO"  ,cTipo      ,Nil},;
+                    {"A2_END"   ,cEnd       ,Nil},;
+                    {"A2_BAIRRO",cBairro    ,Nil},;
+                    {"A2_EST"   ,cEstado    ,Nil},;
+                    {"A2_MUN"   ,cCidade    ,Nil},;
+                    {"A2_COD_MUN",cCodMun    ,Nil},;
+                    {"A2_EMAIL" ,cEmail     ,Nil},;
+                    {"A2_TEL"   ,cTel       ,Nil}}
+        
+        nOpc    := 3
+
+        lMsErroAuto := .F.
+
+        msExecAuto({|x,y| mata020(x,y) }, aDados, nOpc)
+
+        If lMsErroAuto
+            mostraErro('\data\','erro_sa2.txt')
+            cError  := memoread('\data\erro_sa2.txt')
+
+            err             := errorClass():new()
+            err:description := cError
+
+            throw err
+
+        EndIf
+
+        jResp   := jsonObject():new()
+        jResp['codigo'] := SA2->A2_COD
+        jResp['loja']   := SA2->A2_LOJA
+        jResp['nome']   := SA2->(AllTrim(A2_NOME))
+        jResp['status'] := 'FONECEDOR INCLUIDO COM SUCESSO!!'
+
+        oRest:setResponse(jResp:toJson())
+
+    catch err
+        cError  := err:description
+
+        jResp           := jsonObject():new()
+        jResp['error']  := cError
+
+        oRest:SetFault(jResp:toJson())
+
+    endtry
+
+
+    If lRpc
+        rpcClearEnv()
+    EndIf
+
+    
+
+return .T.
 
 method lista_fornecedores() class aula_05
     Local lRpc
