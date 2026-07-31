@@ -1,0 +1,70 @@
+#Include 'totvs.ch'
+#Include 'tlpp-core.th'
+
+Class biscoitoDaSorte
+    
+    public method new() constructor
+
+    @get('projeto/biscoitoDaSorte')
+    public method busca_frases() as logical
+
+EndClass
+
+method new() class biscoitoDaSorte; return self
+
+method busca_frases() class biscoitoDaSorte
+    
+    Local lRpc      as logical
+    Local cError    as character
+
+    Local jResp     as json
+    Local cSql      as character
+    Local cAlias    as character
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRpc    := .T.
+    EndIf
+
+    try
+
+        cSql    := "SELECT ZB1_FRASES " + CRLF
+        cSql    += " FROM " + RetSqlName("ZB1") + CRLF
+        cSql    += " WHERE D_E_L_E_T_ = ' '" + CRLF
+        cSql    += " ORDER BY RANDOM() " + CRLF
+        cSql    += " LIMIT 1 "
+
+        cAlias := getNextAlias()
+
+        dbUseArea(.T., "TOPCONN", tcGenQry(,,cSQL), cAlias, .T., .T.)
+
+        jResp       := jsonObject():new()
+
+        If ! (cAlias)->(eof())
+            jResp['frase']   := AllTrim((cAlias)->ZB1_FRASES)
+        else
+            jResp['frase']   := "A sorte favorece quem insiste!"
+        EndIf
+
+        (cAlias)->(dbCloseArea())
+
+        oRest:setKeyHeaderResponse("Content-Type", "application/json")
+        oRest:setResponse(jResp:toJson())
+
+    catch err
+
+        cError          := err:errorstack
+
+        jResp           := jsonObject():new()
+        jResp['erro']   := cError
+
+        oRest:setFault(jResp:toJson())
+
+    endTry
+
+    If lRpc
+        rpcClearEnv()
+    EndIf
+
+
+return .T.
