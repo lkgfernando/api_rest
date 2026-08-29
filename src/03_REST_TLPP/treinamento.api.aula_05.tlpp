@@ -36,6 +36,8 @@ method incluir_fornecedores() class aula_05
     Local cCodMun   as character
     Local cError    as character
     Local jResp     as json
+    Local cCod      as character
+    Local cLoja     as character
 
     Private err            as object
     Private lMsErroAuto    as Logical
@@ -68,7 +70,27 @@ method incluir_fornecedores() class aula_05
         CC2->(dbSetOrder(4), dbSeek(xFilial(alias())+cEstado+cCidade))
         cCodMun     := CC2->CC2_CODMUN
 
-        aDados  := {{"A2_LOJA"  ,"01"       ,NIL},;
+        If SA2->(dbSetOrder(3), dbSeek(xFilial(alias())+cCgc))
+            nOpc    := 4
+            cCod    := SA2->A2_COD
+            cLoja   := SA2->A2_LOJA
+            
+            aDados  := {{"A2_COD", cCod     ,Nil},;
+                    {"A2_LOJA"  ,cLoja     ,NIL},;
+                    {"A2_NOME"  ,cNome      ,Nil},;
+                    {"A2_NREDUZ",cNomeRed   ,Nil},;
+                    {"A2_END"   ,cEnd       ,Nil},;
+                    {"A2_BAIRRO",cBairro    ,Nil},;
+                    {"A2_EST"   ,cEstado    ,Nil},;
+                    {"A2_MUN"   ,cCidade    ,Nil},;
+                    {"A2_COD_MUN",cCodMun    ,Nil},;
+                    {"A2_EMAIL" ,cEmail     ,Nil},;
+                    {"A2_TEL"   ,cTel       ,Nil}}
+
+        Else
+            nOpc := 3
+
+            aDados  := {{"A2_LOJA"  ,"01"       ,NIL},;
                     {"A2_NOME"  ,cNome      ,Nil},;
                     {"A2_NREDUZ",cNomeRed   ,Nil},;
                     {"A2_CGC"   ,cCgc       ,Nil},;
@@ -80,8 +102,9 @@ method incluir_fornecedores() class aula_05
                     {"A2_COD_MUN",cCodMun    ,Nil},;
                     {"A2_EMAIL" ,cEmail     ,Nil},;
                     {"A2_TEL"   ,cTel       ,Nil}}
+        EndIf
+       
         
-        nOpc    := 3
 
         lMsErroAuto := .F.
 
@@ -98,11 +121,19 @@ method incluir_fornecedores() class aula_05
 
         EndIf
 
-        jResp   := jsonObject():new()
-        jResp['codigo'] := SA2->A2_COD
-        jResp['loja']   := SA2->A2_LOJA
-        jResp['nome']   := SA2->(AllTrim(A2_NOME))
-        jResp['status'] := 'FONECEDOR INCLUIDO COM SUCESSO!!'
+        If nOpc == 3
+            jResp   := jsonObject():new()
+            jResp['codigo'] := SA2->A2_COD
+            jResp['loja']   := SA2->A2_LOJA
+            jResp['nome']   := SA2->(AllTrim(A2_NOME))
+            jResp['status'] := 'FONECEDOR INCLUIDO COM SUCESSO!!'
+        else
+            jResp   := jsonObject():new()
+            jResp['codigo'] := SA2->A2_COD
+            jResp['loja']   := SA2->A2_LOJA
+            jResp['nome']   := SA2->(AllTrim(A2_NOME))
+            jResp['status'] := 'FONECEDOR ATUALIZADO COM SUCESSO!!'
+        EndIf
 
         oRest:setResponse(jResp:toJson())
 
