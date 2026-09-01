@@ -1,0 +1,249 @@
+#Include "totvs.ch"
+#Include "tlpp-core.th"
+
+
+
+Class  zWsTransportes from fwAdapterBaseV2
+    
+    public method new() constructor
+
+    @get('/cadastro/list/transportadoras')
+    public method lista_transportadoras() as logical
+
+    @post('/cadastro/transportadoras/new')
+    public method incluir_transportadoras() as logical
+
+EndClass
+
+method new() class zWsTransportes; return self
+
+method incluir_transportadoras() class zWsTransportes
+
+    Local lRpc      as logical
+    Local jBodyReq  as json
+    Local aDados    as array
+    Local nOpc      as numeric
+    Local cNome     as character
+    Local cNomeRed  as character
+    Local cCgc      as character
+    Local cEnd      as character
+    Local cBairro   as character
+    Local cCidade   as character
+    Local cEstado   as character
+    Local cEmail    as character
+    Local cTel      as character
+    // Local cCodMun   as character
+    Local cError    as character
+    Local jResp     as json
+    Local cCod      as character
+
+    Private err            as object
+    Private lMsErroAuto    as Logical
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRpc        := .T.
+    EndIf
+
+    try
+
+        jBodyReq     := jsonObject():new()
+        jBodyReq:fromJson(oRest:getBodyRequest())
+
+        cNome      := jBodyReq['nome'          ]
+        cNomeRed   := jBodyReq['nome_fantasia' ]
+        cCgc       := jBodyReq['cgc'           ]
+        cEnd       := jBodyReq['endereco'      ]
+        cBairro    := jBodyReq['bairro'        ]
+        cCidade    := jBodyReq['cidade'        ]
+        cEstado    := jBodyReq['estado'        ]
+        cEmail     := jBodyReq['email'         ]
+        cTel       := jBodyReq['telefone'      ]
+
+
+        cCgc       := strTran(strTran(strTran(cCgc,'.',''),'-',''),'/','')
+        cTel       := strTran(strTran(strTran(strTran(cTel,' ',''),'-',''),'(',''),')','')
+
+        // CC2->(dbSetOrder(4), dbSeek(xFilial(alias())+cEstado+cCidade))
+        // cCodMun     := CC2->CC2_CODMUN
+
+        If SA4->(dbSetOrder(3), dbSeek(xFilial(alias())+cCgc))
+            nOpc    := 4
+            cCod    := SA4->A4_COD
+            
+            aDados  := {{"A4_COD", cCod     ,Nil},;
+                    {"A4_NOME"  ,cNome      ,Nil},;
+                    {"A4_NREDUZ",cNomeRed   ,Nil},;
+                    {"A4_END"   ,cEnd       ,Nil},;
+                    {"A4_BAIRRO",cBairro    ,Nil},;
+                    {"A4_EST"   ,cEstado    ,Nil},;
+                    {"A4_MUN"   ,cCidade    ,Nil},;
+                    {"A4_EMAIL" ,cEmail     ,Nil},;
+                    {"A4_TELEX"   ,cTel       ,Nil}}
+
+        Else
+            nOpc := 3
+
+            aDados  := {{"A4_NOME"  ,cNome      ,Nil},;
+                    {"A4_NREDUZ",cNomeRed   ,Nil},;
+                    {"A4_END"   ,cEnd       ,Nil},;
+                    {"A4_BAIRRO",cBairro    ,Nil},;
+                    {"A4_EST"   ,cEstado    ,Nil},;
+                    {"A4_MUN"   ,cCidade    ,Nil},;
+                    {"A4_CGC"   ,cCgc       ,Nil},;
+                    {"A4_EMAIL" ,cEmail     ,Nil},;
+                    {"A4_TELEX"   ,cTel       ,Nil}}
+        EndIf
+       
+        
+
+        lMsErroAuto := .F.
+
+        msExecAuto({|x,y| mata050(x,y) }, aDados, nOpc)
+
+        If lMsErroAuto
+            mostraErro('\data\','erro_SA4.txt')
+            cError  := memoread('\data\erro_SA4.txt')
+
+            err             := errorClass():new()
+            err:description := cError
+
+            throw err
+
+        EndIf
+
+        If nOpc == 3
+            jResp   := jsonObject():new()
+            jResp['codigo'] := SA4->A4_COD
+            jResp['nome']   := SA4->(AllTrim(A4_NOME))
+            jResp['status'] := 'TRANSPORTADORA INCLUIDO COM SUCESSO!!'
+        else
+            jResp   := jsonObject():new()
+            jResp['codigo'] := SA4->A4_COD
+            jResp['nome']   := SA4->(AllTrim(A4_NOME))
+            jResp['status'] := 'TRANSPORTADORA ATUALIZADO COM SUCESSO!!'
+        EndIf
+
+        oRest:setResponse(jResp:toJson())
+
+    catch err
+        cError  := err:description
+
+        jResp           := jsonObject():new()
+        jResp['error']  := cError
+
+        oRest:SetFault(jResp:toJson())
+
+    endtry
+
+
+    If lRpc
+        rpcClearEnv()
+    EndIf
+
+    
+
+return .T.
+
+method lista_transportadoras() class zWsTransportes
+    Local lRpc
+    Local nError        as numeric
+    Local cError        as character
+
+    Local jQueryStr     as json
+    Local jResp         as json
+
+    Local cSql          as character
+    Local cWhere        as character
+    Local cEstado       as character
+    Local cCidade       as character
+    Local nSize         as numeric
+    Local nPage         as numeric
+    Local cOrder        as character
+    Local cSearch       as character
+ 
+
+    If type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRpc        := .T.
+    EndIf
+
+    try
+
+        jQueryStr       := oRest:getQueryRequest()
+
+        cEstado         := jQueryStr['estado'   ]
+        cCidade         := jQueryStr['cidade'   ]
+        nSize           := jQueryStr['pageSize' ]
+        nPage           := jQueryStr['page'     ]
+        cOrder          := jQueryStr['order'    ]
+        cSearch         := jQueryStr['search'   ]
+
+        nSize           := if(empty(nSize),10,nSize)
+        nPage           := if(empty(nPage),1 ,nPage)
+
+        cSql        := "SELECT #QueryFields# FROM " + retSqlName('SA4') + " SA4"
+        cSql        += CRLF + "WHERE #QueryWhere# "
+
+        cWhere      := "D_E_L_E_T_ = ' ' "
+
+        If .not. empty(cEstado)
+            cWhere  += CRLF + "AND A4_EST = '" + cEstado + "' "
+        EndIf
+
+        If .not. empty(cCidade)
+            cWhere += CRLF + "AND A4_MUN LIKE '%" + cCidade + "%'"
+        EndIf
+
+        If .not. empty(cSearch)
+            cWhere += CRLF + "AND A4_NOME LIKE '%" + cSearch + "%'"
+        EndIf
+
+        _Super:new('GET', .T.)
+
+        ::addMapFields('cod'         ,'A4_COD'   ,.T.,.T.,{'A4_COD','C',06,00}, 'SA4.A4_COD') // CASO O CAMPO NÃO EXISTA NA SX3 COLOCAR SEUS PARAMETROS 
+        ::addMapFields('nome'        ,'A4_NOME'  ,.T.)
+        ::addMapFields('fantasia'    ,'A4_NREDUZ',.T.)
+        ::addMapFields('endereco'    ,'A4_END'   ,.T.)
+
+        ::setQuery(cSql)
+        ::setWhere(cWhere)
+        ::setPageSize(nSize)
+        ::setPage(nPage)
+        ::setOrder(cOrder)
+
+        If ::execute()
+
+            ::fillGetResponse()
+            oRest:setResponse(::getJsonResponse())
+
+        Else
+            
+            nError          := ::getCode()
+            cError          := ::getMessage()
+
+            jResp           := jsonObject():new()
+            jResp['error']  := cError
+
+            oRest:setFault(jResp:toJson())
+
+        EndIf
+
+    catch err
+
+        cError          := err:errorstack
+
+        jResp           := jsonObject():new()
+        jResp['error']  := cError
+
+        oRest:SetFault(jResp:toJson())
+
+
+    endtry
+
+
+    If lRpc
+        rpcClearEnv()
+    EndIf
+
+return .T.
