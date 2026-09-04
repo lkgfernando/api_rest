@@ -172,6 +172,7 @@ method lista_transportadoras() class zWsTransportes
 
         jQueryStr       := oRest:getQueryRequest()
 
+        cGcc            := jQueryStr['cgc'      ]
         cEstado         := jQueryStr['estado'   ]
         cCidade         := jQueryStr['cidade'   ]
         nSize           := jQueryStr['pageSize' ]
@@ -186,6 +187,10 @@ method lista_transportadoras() class zWsTransportes
         cSql        += CRLF + "WHERE #QueryWhere# "
 
         cWhere      := "D_E_L_E_T_ = ' ' "
+
+        If .not. empty(cGcc)
+            cWhere  += CRLF + "AND A4_CGC = '" + cGcc + "' "
+        EndIf
 
         If .not. empty(cEstado)
             cWhere  += CRLF + "AND A4_EST = '" + cEstado + "' "
@@ -205,6 +210,11 @@ method lista_transportadoras() class zWsTransportes
         ::addMapFields('nome'        ,'A4_NOME'  ,.T.)
         ::addMapFields('fantasia'    ,'A4_NREDUZ',.T.)
         ::addMapFields('endereco'    ,'A4_END'   ,.T.)
+        ::addMapFields('bairro'      ,'A4_BAIRRO',.T.)
+        ::addMapFields('cidade'      ,'A4_MUN'   ,.T.)
+        ::addMapFields('uf'          ,'A4_EST'   ,.T.)
+        ::addMapFields('email'       ,'A4_EMAIL' ,.T.)
+        ::addMapFields('telefone'    ,'A4_TELEX' ,.T.)
 
         ::setQuery(cSql)
         ::setWhere(cWhere)
